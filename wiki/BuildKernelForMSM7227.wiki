@@ -1,5 +1,5 @@
-# Поставить linux (хотя бы в virtualbox/vmware), под windows+cygwin собрать ядро не получится.
-# Скачать тулчейн/кросс-компилятор для arm. Подойдет даже тот, который есть в android NDK (там он в toolchains/arm-linux-
+  # Поставить linux (хотя бы в virtualbox/vmware), под windows+cygwin собрать ядро не получится.
+  # Скачать тулчейн/кросс-компилятор для arm. Подойдет даже тот, который есть в android NDK (там он в toolchains/arm-linux-
 androideabi-4.x.x/prebuilt/linux-x86/bin или типа того)
 2. Из командной строки задать переменные среды для кросс-компиляции:
 export ARCH=arm
