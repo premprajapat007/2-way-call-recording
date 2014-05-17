@@ -1,0 +1,58 @@
+diff --git a/sound/soc/msm/qdsp6v2/msm-pcm-voice-v2.c b/sound/soc/msm/qdsp6v2/msm-pcm-voice-v2.c
+index cf076c8..3cc6904 100644
+--- a/sound/soc/msm/qdsp6v2/msm-pcm-voice-v2.c
++++ b/sound/soc/msm/qdsp6v2/msm-pcm-voice-v2.c
+@@ -464,6 +464,8 @@ static struct snd_kcontrol_new msm_voice_controls[] = {
+ 				msm_voice_tty_mode_put),
+ 	SOC_SINGLE_MULTI_EXT("Slowtalk Enable", SND_SOC_NOPM, 0, VSID_MAX, 0, 2,
+ 				NULL, msm_voice_slowtalk_put),
++	// Dummy control to expose stereo recording support in kernel to user-space
++	SOC_SINGLE_EXT("Stereo Recording", SND_SOC_NOPM, 0, VSID_MAX, 0, NULL, NULL),			
+ };
+ 
+ static struct snd_pcm_ops msm_pcm_ops = {
+diff --git a/sound/soc/msm/qdsp6v2/q6voice.c b/sound/soc/msm/qdsp6v2/q6voice.c
+index fe6ef5d..fc7f7b5 100644
+--- a/sound/soc/msm/qdsp6v2/q6voice.c
++++ b/sound/soc/msm/qdsp6v2/q6voice.c
+@@ -3474,8 +3474,15 @@ static int voice_cvs_start_record(struct voice_data *v, uint32_t rec_mode)
+ 		cvs_start_record.hdr.token = 0;
+ 		cvs_start_record.hdr.opcode = VSS_IRECORD_CMD_START;
+ 
++		// In order to enable stereo recording, 
++		// i.e. TX on the left and RX on the right
++		// the respective ports need to be explicitly specified:
++		// INCALL_RECORD_TX => 0x8003
++		// INCALL_RECORD_RX => 0x8004
++		/*cvs_start_record.rec_mode.port_id =
++					VSS_IRECORD_PORT_ID_DEFAULT; */
+ 		cvs_start_record.rec_mode.port_id =
+-					VSS_IRECORD_PORT_ID_DEFAULT;
++		                        VSS_IRECORD_PORT_ID_TX_RX;
+ 		if (rec_mode == VOC_REC_UPLINK) {
+ 			cvs_start_record.rec_mode.rx_tap_point =
+ 					VSS_IRECORD_TAP_POINT_NONE;
+@@ -3498,6 +3505,9 @@ static int voice_cvs_start_record(struct voice_data *v, uint32_t rec_mode)
+ 			ret = -EINVAL;
+ 			goto fail;
+ 		}
++		
++		// request stereo recording
++		cvs_start_record.rec_mode.mode = VSS_IRECORD_MODE_TX_RX_STEREO;
+ 
+ 		v->cvs_state = CMD_STATUS_FAIL;
+ 
+diff --git a/sound/soc/msm/qdsp6v2/q6voice.h b/sound/soc/msm/qdsp6v2/q6voice.h
+index 86121ed..f920023 100644
+--- a/sound/soc/msm/qdsp6v2/q6voice.h
++++ b/sound/soc/msm/qdsp6v2/q6voice.h
+@@ -503,6 +503,9 @@ struct vss_imemory_cmd_unmap_t {
+ #define VSS_IRECORD_PORT_ID_DEFAULT			0x0000FFFF
+ /* Default AFE port ID. */
+ 
++#define VSS_IRECORD_PORT_ID_TX_RX			0x00008003
++/* Port explicitly identifying TX and RX streams */
++
+ #define VSS_IRECORD_TAP_POINT_NONE			0x00010F78
+ /* Indicates no tapping for specified path. */
+ 
