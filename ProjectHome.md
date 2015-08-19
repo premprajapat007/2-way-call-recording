@@ -1,0 +1,1 @@
+This is the patch for kernel that allows to record the calls directly from the phone line
